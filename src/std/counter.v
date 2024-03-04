@@ -3,9 +3,7 @@
  * Synchronous counter modelled similar to 74193
  *
  * Parameter Description
- * Width    - The no of states of the counter
- * exp      - 2^exp >= Width; This relation should be satisfied
- *            exp is the no of flops to be used for the implementation
+ * Width    - Width of the counter (No of flip-flops)
  *
  * Port Description
  * CLK      - Clock input
@@ -13,29 +11,31 @@
  * CE       - Count Enable. The Counter state changes only if this pin is active
  * TC       - The terminal count. Combinationally dependent on Count and CE 
  */
-module counter #(parameter exp = 3, parameter Width = 8 ) (
+module counter #(parameter WIDTH = 3, parameter RESET_VAL = 0 ) (
     input CLK,
     input RST,
     input CE,
-    output TC
+    output TC,
+    output [WIDTH-1:0] count
     );
 
-  reg[exp-1:0] Count;
+  reg[WIDTH-1:0] count_r;
   wire wTC;
-  reg[exp:0] temp;
+  wire[WIDTH:0] nextCount;
   
   assign TC = wTC & CE;
-  assign wTC = (Count == Width-1)?1'b1:1'b0;
+  assign wTC = &count_r;
+  assign count = count_r;
+  assign nextCount = count_r + 1;
   
   always @ (posedge CLK) begin
     if(RST == 0) begin
       if(CE == 1)
-        temp = Count + 1;
+        count_r <= nextCount[WIDTH-1:0];
       else
-        temp = Count;
-      Count <= (temp[exp-1] < Width)?temp[exp-1:0]:0;
+        count_r <= count_r;
     end else begin
-      Count <= 0;
+      count_r <= RESET_VAL;
     end
   end
 endmodule
